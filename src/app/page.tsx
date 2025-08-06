@@ -1,103 +1,184 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+
+export default function HTMLSandbox() {
+  const [htmlCode, setHtmlCode] = useState(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <p>Start coding here...</p>
+</body>
+</html>`)
+
+  const [currentView, setCurrentView] = useState<'editor' | 'preview'>('editor')
+  const [previewKey, setPreviewKey] = useState(0)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPreviewKey(prev => prev + 1)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [htmlCode])
+
+  // Hotkey listener
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === ' ') {
+        e.preventDefault()
+        setCurrentView(prev => prev === 'editor' ? 'preview' : 'editor')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [])
+
+  const handleClear = () => {
+    setHtmlCode('')
+  }
+
+  const handleReset = () => {
+    setHtmlCode(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <p>Start coding here...</p>
+</body>
+</html>`)
+  }
+
+  const switchView = (view: 'editor' | 'preview') => {
+    setCurrentView(view)
+  }
+
+  const wrappedCode = `
+    <script>
+      setTimeout(() => {
+        if (confirm('Script running for 10+ seconds. Stop execution?')) {
+          window.stop();
+        }
+      }, 10000);
+    </script>
+    ${htmlCode}
+  `;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="flex flex-col h-screen bg-slate-900 text-slate-100">
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Code Editor View */}
+        {currentView === 'editor' && (
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between bg-slate-800 px-3 py-2 border-b border-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-200 font-medium">Editor</span>
+                <span className="text-xs text-slate-400">Ctrl+Space to switch</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleReset}
+                  className="px-3 py-1 text-xs bg-slate-700 hover:bg-emerald-600 text-slate-300 hover:text-white rounded transition-all duration-200"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="px-3 py-1 text-xs bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded transition-all duration-200"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            
+            <textarea
+              value={htmlCode}
+              onChange={(e) => setHtmlCode(e.target.value)}
+              className="flex-1 p-4 bg-slate-900 text-slate-100 font-mono text-sm resize-none outline-none border-none focus:bg-slate-850 selection:bg-emerald-500/30"
+              placeholder="Write your HTML code here..."
+              spellCheck={false}
+              autoFocus
+              style={{ 
+                caretColor: '#10b981',
+                lineHeight: '1.5'
+              }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            
+            <div className="bg-slate-800 px-3 py-2 text-xs text-slate-400 border-t border-slate-700">
+              <div className="flex items-center gap-4">
+                <span>{htmlCode.split('\n').length} lines</span>
+                <span>{htmlCode.length} characters</span>
+                <div className="ml-auto flex items-center gap-1">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span className="text-emerald-400">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Preview View */}
+        {currentView === 'preview' && (
+          <div className="flex flex-col h-full">
+            <div className="bg-slate-800 px-3 py-2 border-b border-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-200 font-medium">Preview</span>
+                <span className="text-xs text-slate-400">Ctrl+Space to switch</span>
+                <span className="text-xs text-amber-400 flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>Public sandbox</span>
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex-1 bg-white relative">
+              <iframe
+                key={previewKey}
+                srcDoc={wrappedCode}
+                className="w-full h-full border-none"
+                sandbox="allow-scripts allow-forms allow-modals allow-presentation"
+                title="HTML Preview"
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                allow="none"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Navigation Bar */}
+      <div className="bg-slate-800 border-t border-slate-700 px-3 py-3">
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={() => switchView('editor')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+              currentView === 'editor'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-slate-200'
+            }`}
           >
-            Read our docs
-          </a>
+            Editor
+          </button>
+          <button
+            onClick={() => switchView('preview')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+              currentView === 'preview'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-slate-200'
+            }`}
+          >
+            Preview
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
-  );
+  )
 }
